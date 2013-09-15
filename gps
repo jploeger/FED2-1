@@ -1,0 +1,121 @@
+var Space = SPACE || {};
+
+(function(){
+
+	SPACE.app = {
+		
+		var self = this;
+
+		init : function(){
+			SPACE.gps.startInterval();
+		}
+
+	}
+
+	SPACE.gps = {
+
+		var self = this;
+	
+		init : function(){
+			debug_message("Controleer of GPS beschikbaar is...");
+
+		    ET.addListener(GPS_AVAILABLE, self.startInterval);
+		    ET.addListener(GPS_UNAVAILABLE, function(){debug_message('GPS is niet beschikbaar.')});
+
+		    (geo_position_js.init())?ET.fire(GPS_AVAILABLE):ET.fire(GPS_UNAVAILABLE);
+
+		}
+
+		startInterval : function(){
+
+			debug_message("GPS is beschikbaar, vraag positie.");
+    		self.updatePosition();
+    		interval = self.setInterval(self.updatePosition, REFRESH_RATE);
+    		ET.addListener(POSITION_UPDATED, self.checkLocation);
+		}
+
+		updatePosition : function(){
+
+			intervalCounter++;
+    		geo_position_js.getCurrentPosition(self.setPosition, SPACE.debug.geoErrorHandler, {enableHighAccuracy:true});
+
+		}
+
+		setPosition : function(){
+
+			currentPosition = position;
+    		ET.fire("POSITION_UPDATED");
+    		debug_message(intervalCounter+" positie lat:"+position.coords.latitude+" long:"+position.coords.longitude);
+
+		}
+
+		checkLocation : function(){
+
+			for (var i = 0; i < locaties.length; i++) {
+		        var locatie = {coords:{latitude: locaties[i][3],longitude: locaties[i][4]}};
+
+		        if(_calculate_distance(locatie, currentPosition)<locaties[i][2]){
+
+		            // Controle of we NU op die locatie zijn, zo niet gaan we naar de betreffende page
+		            if(window.location!=locaties[i][1] && localStorage[locaties[i][0]]=="false"){
+		                // Probeer local storage, als die bestaat incrementeer de locatie
+		                try {
+		                    (localStorage[locaties[i][0]]=="false")?localStorage[locaties[i][0]]=1:localStorage[locaties[i][0]]++;
+		                } catch(error) {
+		                    debug_message("Localstorage kan niet aangesproken worden: "+error);
+		                }
+
+						// TODO: Animeer de betreffende marker
+
+		                window.location = locaties[i][1];
+		                debug_message("Speler is binnen een straal van "+ locaties[i][2] +" meter van "+locaties[i][0]);
+		            }
+		        }
+    		}
+
+		}
+
+		calculateDistance : function(){
+
+		}
+
+	}
+
+	SPACE.map = {
+
+		generateMap : function(){
+
+		}
+
+		updatePosition : function(){
+
+		}
+
+
+	}
+
+	SPACE.debug = {
+
+		geoErrorHandler : function(){
+
+		}
+
+		debugMessage : function(){
+
+		}
+
+		setCustomDebugging : function(){
+
+		}
+
+	}
+
+	SPACE.helper = {
+		
+		isNumber : function(){
+
+		}
+	}
+})
+
+SPACE.app.init
